@@ -1,25 +1,33 @@
-# Trading Agent League (Simulation)
+# Trading Agent League (Obsidian Plugin)
 
-## Goal
-Build a fully virtual stock/BTC simulation where multiple AI agents trade under fixed rules, then rank them by risk-adjusted performance.
+`trading-agent-league`를 Obsidian에서 라운드 기록/순위표 생성에 쓰는 플러그인입니다.
 
-## Scope (MVP)
-- Replay historical OHLCV data (stocks + BTC)
-- 3 agents with different strategies
-- Order engine with fee/slippage
-- Risk guardrails (max daily loss, max drawdown)
-- Scoreboard (Return, MDD, Sharpe, Win Rate)
-- Simple web dashboard
+## BRAT 설치
+1. Obsidian에서 **BRAT** 플러그인 설치/활성화
+2. BRAT → **Add a beta plugin**
+3. 아래 저장소 URL 입력:
+   - `https://github.com/piman-code/trading-agent-league`
+4. 설치 후 커맨드 팔레트에서 아래 명령 실행
 
-## Folders
-- `engine/` market replay + order execution + risk controls
-- `app/` dashboard/API
-- `data/` source datasets and loaders
-- `results/` run outputs and leaderboard snapshots
-- `docs/` specs and evaluation rules
+## 제공 명령어
+- `TAL: 라운드 노트 생성`
+  - 리그명/라운드/참가자 입력 모달
+  - 라운드 템플릿 노트 자동 생성
+- `TAL: Results에서 순위표 생성`
+  - `## Results`의 `- 이름: 수익률%` 형식 파싱
+  - 수익률 기준 순위표 생성
 
-## Next
-1. Finalize MVP spec and evaluation metrics
-2. Implement simulation engine
-3. Add dashboard + run manager
-4. Run league and rank agents
+## Results 형식 예시
+```md
+## Results
+- Alpha: 3.12%
+- Beta: -0.42%
+- Gamma: 1.07%
+```
+
+## BRAT 호환 파일
+- `manifest.json`
+- `main.js`
+- `versions.json`
+
+위 3개 파일을 저장소 루트에 두어 BRAT에서 바로 인식되도록 구성했습니다.
