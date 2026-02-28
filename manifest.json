@@ -1,7 +1,7 @@
 {
   "id": "trading-agent-league",
   "name": "Trading Agent League",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "minAppVersion": "1.0.0",
   "description": "Obsidian plugin for running lightweight trading league rounds and generating standings.",
   "author": "jarvis",
