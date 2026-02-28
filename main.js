@@ -1,14 +1,21 @@
 "use strict";
 
-const { Plugin, Notice, Modal, Setting } = require("obsidian");
+const { Plugin, Notice, Modal, Setting, PluginSettingTab } = require("obsidian");
+
+const DEFAULT_SETTINGS = {
+  defaultLeagueName: "Trading Agent League",
+  defaultParticipants: "Alpha,Beta,Gamma",
+  ribbonIcon: "trophy",
+};
 
 class RoundModal extends Modal {
-  constructor(app, onSubmit) {
+  constructor(app, plugin, onSubmit) {
     super(app);
+    this.plugin = plugin;
     this.onSubmit = onSubmit;
-    this.league = "Trading Agent League";
+    this.league = plugin.settings.defaultLeagueName;
     this.round = 1;
-    this.participants = "Alpha,Beta,Gamma";
+    this.participants = plugin.settings.defaultParticipants;
   }
 
   onOpen() {
@@ -18,7 +25,7 @@ class RoundModal extends Modal {
 
     new Setting(contentEl)
       .setName("리그 이름")
-      .addText((t) => t.setValue(this.league).onChange((v) => (this.league = v || "Trading Agent League")));
+      .addText((t) => t.setValue(this.league).onChange((v) => (this.league = v || this.plugin.settings.defaultLeagueName)));
 
     new Setting(contentEl)
       .setName("라운드")
@@ -47,8 +54,46 @@ class RoundModal extends Modal {
   }
 }
 
+class TALSettingTab extends PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    containerEl.createEl("h2", { text: "Trading Agent League 설정" });
+
+    new Setting(containerEl)
+      .setName("기본 리그 이름")
+      .addText((t) =>
+        t.setValue(this.plugin.settings.defaultLeagueName).onChange(async (v) => {
+          this.plugin.settings.defaultLeagueName = v.trim() || DEFAULT_SETTINGS.defaultLeagueName;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("기본 참가자")
+      .setDesc("쉼표(,)로 구분")
+      .addTextArea((a) =>
+        a.setValue(this.plugin.settings.defaultParticipants).onChange(async (v) => {
+          this.plugin.settings.defaultParticipants = v.trim() || DEFAULT_SETTINGS.defaultParticipants;
+          await this.plugin.saveSettings();
+        })
+      );
+  }
+}
+
 module.exports = class TradingAgentLeaguePlugin extends Plugin {
   async onload() {
+    await this.loadSettings();
+
+    this.addRibbonIcon(this.settings.ribbonIcon || "trophy", "TAL: 라운드 노트 생성", () => this.openRoundModal());
+
+    this.addSettingTab(new TALSettingTab(this.app, this));
+
     this.addCommand({
       id: "tal-create-round-note",
       name: "TAL: 라운드 노트 생성",
@@ -67,8 +112,16 @@ module.exports = class TradingAgentLeaguePlugin extends Plugin {
     });
   }
 
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
+
   openRoundModal() {
-    new RoundModal(this.app, async ({ league, round, participants }) => {
+    new RoundModal(this.app, this, async ({ league, round, participants }) => {
       const active = this.app.workspace.getActiveFile();
       const base = active ? active.parent.path : "";
       const safe = league.replace(/[\\/:*?"<>|]/g, "-").trim();
@@ -85,7 +138,8 @@ module.exports = class TradingAgentLeaguePlugin extends Plugin {
   }
 
   roundTemplate(league, round, participants) {
-    const p = participants.length ? participants : ["Alpha", "Beta", "Gamma"];
+    const defaultPeople = this.settings.defaultParticipants.split(",").map((x) => x.trim()).filter(Boolean);
+    const p = participants.length ? participants : defaultPeople;
     return `---
 league: ${league}
 round: ${round}
